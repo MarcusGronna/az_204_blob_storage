@@ -25,7 +25,6 @@ Console.ReadLine();
 async Task ProcessAsync()
 {
     // CREATE A BLOB STORAGE CLIENT
-
         // Create a credential using DefaultAzureCredential with configured options
     string accountName = config["YOUR_ACCOUNT_NAME"]!;
 
@@ -38,11 +37,36 @@ async Task ProcessAsync()
 
 
     // CREATE A CONTAINER
+        // Create a unique name for the container
+    string containerName = "wtblob" + Guid.NewGuid().ToString();
 
+        // Create the container and return a container client object
+    Console.WriteLine("Creating container: " + containerName);
+    BlobContainerClient containerClient = await blobServiceClient.CreateBlobContainerAsync(containerName);
 
+        // Check if the container was created successfully
+    if (containerClient != null)
+    {
+        Console.WriteLine("Container created successfully, press 'Enter' to continue.");
+        Console.ReadLine();
+    }
+    else
+    {
+        Console.WriteLine("Failed to create the container, exiting program.");
+        return;
+    }
 
     // CREATE A LOCAL FILE FOR UPLOAD TO BLOB STORAGE
+        // Create a local file in the ./data/ directory for uploading and downloading
+    Console.WriteLine("Creating a local file for upload to Blob storage...");
+    string localPath = "./data/";
+    string fileName = "wtfile" + Guid.NewGuid().ToString() + ".txt";
+    string localFilePath = Path.Combine(localPath, fileName);
 
+        // Write tetx to the file
+    await File.WriteAllTextAsync(localFilePath, "Hello, World!");
+    Console.WriteLine("Local file created, press 'Enter' to continue.");
+    Console.ReadLine();
 
 
     // UPLOAD THE FILE TO BLOB STORAGE
