@@ -70,8 +70,30 @@ async Task ProcessAsync()
 
 
     // UPLOAD THE FILE TO BLOB STORAGE
+        // Get a reference to the blob and upload the file
+    BlobClient blobClient = containerClient.GetBlobClient(fileName);
 
+    Console.WriteLine("Uploading to Blob storage as blob:\n\t {0}", blobClient.Uri);
 
+        // Open the file and upload its data 
+    using (FileStream uploadFileStream = File.OpenRead(localFilePath))
+    {
+        await blobClient.UploadAsync(uploadFileStream);
+        uploadFileStream.Close();
+    }
+
+        // Verify if the file was uploaded successfully
+    bool blobExists = await blobClient.ExistsAsync();
+    if (blobExists)
+    {
+        Console.WriteLine("File uploaded successfully, press 'Enter' to continue.");
+        Console.ReadLine();
+    }
+    else
+    {
+        Console.WriteLine("File upload failed, exiting program...");
+        return;
+    }
 
     // LIST BLOBS IN THE CONTAINER
 
