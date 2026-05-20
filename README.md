@@ -8,10 +8,10 @@ This console app demonstrates how to work with **Azure Blob Storage** using the 
 - Connecting to Azure Blob Storage using `BlobServiceClient`
 - Authenticating with `DefaultAzureCredential` (no hardcoded secrets)
 - Managing credentials securely with .NET User Secrets
-- Creating blob containers
-- Uploading files to Blob Storage
-- Listing blobs in a container
-- Downloading blobs to local files
+- Creating blob containers with GUIDs to ensure uniqueness
+- Uploading local files to Blob Storage via `FileStream`
+- Listing blobs in a container using asynchronous stream iteration (`await foreach`)
+- Downloading blobs to local files with streaming (`CopyToAsync`) to optimize memory
 
 ## Tech Stack
 
@@ -34,7 +34,7 @@ This console app demonstrates how to work with **Azure Blob Storage** using the 
 
 ### 1. Clone the repo
 
-```
+```bash
 git clone https://github.com/MarcusGronna/az_204_blob_storage.git
 cd az_204_blob_storage/azstor
 ```
@@ -43,7 +43,7 @@ cd az_204_blob_storage/azstor
 
 This project uses [.NET User Secrets](https://learn.microsoft.com/en-us/aspnet/core/security/app-secrets) to keep your storage account name out of source control.
 
-```
+```bash
 dotnet user-secrets set "YOUR_ACCOUNT_NAME" "<your-storage-account-name>"
 ```
 
@@ -53,7 +53,7 @@ dotnet user-secrets set "YOUR_ACCOUNT_NAME" "<your-storage-account-name>"
 
 Log in via the Azure CLI:
 
-```
+```bash
 az login
 ```
 
@@ -61,8 +61,39 @@ Or ensure you are signed in to the same Azure account in Visual Studio.
 
 ### 4. Run the app
 
-```
+```bash
 dotnet run
+```
+
+## Key Code Patterns Explored
+
+### 💡 Local-First Authentication
+We configure `DefaultAzureCredentialOptions` specifically to exclude Environment Variables and Managed Identities. This makes local login resolution much faster and explicitly tells the SDK to find developer credentials:
+```csharp
+DefaultAzureCredentialOptions options = new()
+{
+    ExcludeEnvironmentCredential = true,
+    ExcludeManagedIdentityCredential = true
+};
+```
+
+### 💡 Asynchronous Stream Iteration (`await foreach`)
+Instead of fetching all blobs into local memory at once, we use `await foreach` on `GetBlobsAsync()`, which lazily loads items from Azure page-by-page as they're needed:
+```csharp
+await foreach (BlobItem blobItem in containerClient.GetBlobsAsync())
+{
+    Console.WriteLine("\t" + blobItem.Name);
+}
+```
+
+### 💡 Memory-Efficient Downloading
+By downloading the blob content as a `Stream` rather than a full byte array, the program can stream the content directly to the file system using a very tiny memory footprint.
+```csharp
+BlobDownloadInfo download = await blobClient.DownloadAsync();
+using (FileStream downloadFileStream = File.OpenWrite(downloadFilePath))
+{
+    await download.Content.CopyToAsync(downloadFileStream);
+}
 ```
 
 ## Security Notes
@@ -75,3 +106,4 @@ dotnet run
 - [Azure Blob Storage documentation](https://learn.microsoft.com/en-us/azure/storage/blobs/)
 - [Azure SDK for .NET](https://learn.microsoft.com/en-us/dotnet/azure/sdk/azure-sdk-for-dotnet)
 - [AZ-204 Exam overview](https://learn.microsoft.com/en-us/credentials/certifications/exams/az-204/)
+
