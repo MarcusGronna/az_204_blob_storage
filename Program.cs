@@ -1,8 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Configuration.UserSecrets;
-using Azure.Identity;
+﻿using Azure.Identity;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Configuration;
 
 var config = new ConfigurationBuilder()
     .AddUserSecrets<Program>()
@@ -107,13 +106,13 @@ async Task ProcessAsync()
     Console.ReadLine();
 
     // DOWNLOAD THE BLOB TO A LOCAL FILE
-        // Adds the string "DOWNLOADED" before the .txt extension so it doesn't
-        // overwrite the original file
+    // Adds the string "DOWNLOADED" before the .txt extension so it doesn't
+    // overwrite the original file
     string downloadFilePath = localFilePath.Replace(".txt", "DOWNLOADED.txt");
 
     Console.WriteLine("Downloading blob to: {0}", downloadFilePath);
 
-        // Download the blob's contents and save it to a file
+    // Download the blob's contents and save it to a file
     BlobDownloadInfo download = await blobClient.DownloadAsync();
 
     using (FileStream downloadFileStream = File.OpenWrite(downloadFilePath))
